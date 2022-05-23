@@ -3,6 +3,10 @@ package cf.jerryzrf.solarterms;
 import android.app.Activity;
 import android.app.AlertDialog;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+
 /**
  * @author JerryZRF
  */
@@ -22,5 +26,19 @@ public final class Utils {
                 ex.printStackTrace();
             }
         }).start();
+    }
+
+    /**
+     * 拷贝文件
+     * @param is 源文件
+     * @param os 目标文件
+     */
+    public static void copyFile(InputStream is, OutputStream os) throws IOException {
+        byte[] buffer = new byte[4096];
+        int n;
+        while ((n = is.read(buffer)) != -1) {
+            os.write(buffer, 0, n);
+        }
+        os.close();
     }
 }

@@ -6,6 +6,23 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         tools:context=".MainActivity">
+    <RelativeLayout
+            android:id="@+id/gif_layout"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="bottom"
+            android:background="@android:color/black"
+            android:layout_alignParentBottom="true"
+            android:orientation="vertical" app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintTop_toTopOf="parent" app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+        <VideoView
+                android:id="@+id/gif_view"
+                android:layout_gravity="center"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+        </VideoView>
+    </RelativeLayout>
     <Button
             android:text="下一个节气"
             android:layout_width="51dp"

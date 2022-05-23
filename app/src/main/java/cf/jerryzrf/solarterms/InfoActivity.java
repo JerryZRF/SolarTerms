@@ -37,7 +37,7 @@ public class InfoActivity extends AppCompatActivity {
                             content.setText(object.getString("xisu"));
                             break;
                         case R.id.item_yiji:
-                            setTitle("当天的宜忌");
+                            setTitle(st + "的宜忌");
                             content.setText(object.getString("yiji"));
                             break;
                         default:

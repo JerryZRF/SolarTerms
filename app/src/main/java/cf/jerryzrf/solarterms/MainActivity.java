@@ -1,15 +1,20 @@
 package cf.jerryzrf.solarterms;
 
 import android.content.Intent;
+import android.content.res.AssetManager;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.VideoView;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
@@ -18,15 +23,21 @@ import java.time.format.DateTimeFormatter;
  */
 public class MainActivity extends AppCompatActivity {
 
+    static int nowSt;
+    static VideoView video;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        video = findViewById(R.id.gif_view);
+        findViewById(R.id.gif_layout).setVisibility(View.GONE);
         Json.init(getAssets());  //加载json
+        new Thread(this::init).start();
         LocalDate date = LocalDate.now();
         int month = date.getMonthValue();
         int day = date.getDayOfMonth();
-        int mid = -1;  //今天的节气（-1表示没有节气在今天）
+        int today = -1;  //今天的节气（-1表示没有节气在今天）
         Integer next = null;  //下一个节气（当mid==-1时）
         try {
             //找今天是什么节气
@@ -34,26 +45,26 @@ public class MainActivity extends AppCompatActivity {
                 LocalDate tmp = LocalDate.parse(Json.getObject(date.getYear(), i).getString("date"));
                 int stMonth = tmp.getMonthValue();
                 int stDay = tmp.getDayOfMonth();
+                System.out.println(stMonth + "-" + stDay);
                 if (month < stMonth) {
                     next = i;
                     break;
                 } else if (month == stMonth) {
                     if (day == stDay) {
-                        mid = i;
+                        today = i;
                         break;
-                    } else if (day > stDay) {
-                        mid = -1;
+                    } else if (day < stDay) {
                         next = i;
                         break;
                     }
                 }
             }
-            int finalMid = mid;
+            int finalMid = today;
             Integer finalNext = next;
             //“今天”按钮
             findViewById(R.id.back).setOnClickListener((View view) -> {
                 try {
-                    solarTerm(date, finalMid, finalNext - 1);
+                    solarTerm(date, finalMid, finalNext);
                 } catch (JSONException e) {
                     Utils.crashByJson(this);
                     e.printStackTrace();
@@ -65,7 +76,7 @@ public class MainActivity extends AppCompatActivity {
                 intent.setClass(MainActivity.this, AboutActivity.class);
                 startActivity(intent);
             });
-            solarTerm(date, mid, next);
+            solarTerm(date, today, next);
         } catch (Exception e) {
             Utils.crashByJson(this);
             e.printStackTrace();
@@ -80,6 +91,7 @@ public class MainActivity extends AppCompatActivity {
      * @throws IllegalArgumentException 当num==-1时，l不应为null
      */
     public void solarTerm(LocalDate date, int num, @Nullable Integer nextSt) throws JSONException, IllegalArgumentException {
+        nowSt = num;
         Button lastButton = findViewById(R.id.last);
         Button nextButton = findViewById(R.id.next);
         lastButton.setEnabled(true);
@@ -100,15 +112,20 @@ public class MainActivity extends AppCompatActivity {
             textView.setTextSize(20);
             textView.setText("没有节气在今天呢");
             findViewById(R.id.back).setEnabled(false);
-            ((TextView)findViewById(R.id.textView2)).setText("");
-            ((TextView)findViewById(R.id.date)).setText(date.format(DateTimeFormatter.ISO_DATE));
+            ((TextView) findViewById(R.id.textView2)).setText("");
+            ((TextView) findViewById(R.id.date)).setText(date.format(DateTimeFormatter.ISO_DATE));
             findViewById(R.id.info).setEnabled(false);
+            findViewById(R.id.gif_layout).setVisibility(View.GONE);
         } else {
+            findViewById(R.id.gif_layout).setVisibility(View.VISIBLE);
+            VideoView gif = findViewById(R.id.gif_view);
+            gif.setVideoPath(getCacheDir().getPath() + "/" + Json.getObject(LocalDate.now().getYear(), num).getString("name") + ".mp4");
+            gif.start();
             findViewById(R.id.back).setEnabled(true);
             findViewById(R.id.textView2).setVisibility(View.GONE);
             findViewById(R.id.info).setEnabled(true);
             JSONObject object = Json.getObject(date.getYear(), num);
-            ((TextView)findViewById(R.id.date)).setText(object.getString("date"));
+            ((TextView) findViewById(R.id.date)).setText(object.getString("date"));
             try {
                 ((TextView) findViewById(R.id.today)).setText(object.getString("name"));
             } catch (JSONException e) {
@@ -127,7 +144,7 @@ public class MainActivity extends AppCompatActivity {
             });
         }
         int finalNum = num;
-        //下一个
+        //上一个
         lastButton.setOnClickListener((View view) -> {
             try {
                 solarTerm(date, finalNum - 1, null);
@@ -136,7 +153,7 @@ public class MainActivity extends AppCompatActivity {
                 e.printStackTrace();
             }
         });
-        //上一个
+        //下一个
         nextButton.setOnClickListener((View view) -> {
             try {
                 solarTerm(date, finalNum + 1, null);
@@ -145,5 +162,39 @@ public class MainActivity extends AppCompatActivity {
                 e.printStackTrace();
             }
         });
+    }
+
+    public void init() {
+        AssetManager assetManager = getAssets();
+        try {
+            for (int i = 0; i < 24; i++) {
+                String fileName = Json.getObject(LocalDate.now().getYear(), i).getString("name") + ".mp4";
+                File out = new File(this.getCacheDir(), fileName);
+                if (out.exists()) {
+                    continue;
+                }
+                try {
+                    out.createNewFile();
+                    Utils.copyFile(assetManager.open("videos/" + fileName), Files.newOutputStream(out.toPath()));
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    Utils.crashByJson(this);
+                }
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+            Utils.crashByJson(this);
+        }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        try {
+            MainActivity.video.setVideoPath(getCacheDir() + "/" + Json.getObject(LocalDate.now().getYear(), nowSt).getString("name") + ".mp4");
+            MainActivity.video.start();
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
     }
 }
