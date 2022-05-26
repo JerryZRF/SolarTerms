@@ -1,11 +1,4 @@
 <resources>
     <string name="app_name">SolarTerms</string>
-    <string name="title_activity_info">Info</string>
     <!-- Strings used for fragments for navigation -->
-    <string name="next">Next</string>
-    <string name="previous">Previous</string>
-    <string name="title_activity_test">Test</string>
-    <string name="title_home">Home</string>
-    <string name="title_dashboard">Dashboard</string>
-    <string name="title_notifications">Notifications</string>
 </resources>

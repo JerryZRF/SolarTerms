@@ -24,7 +24,7 @@ import java.time.format.DateTimeFormatter;
 public class MainActivity extends AppCompatActivity {
 
     static int nowSt;
-    static VideoView video;
+    VideoView video;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,6 +32,12 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         video = findViewById(R.id.gif_view);
         findViewById(R.id.gif_layout).setVisibility(View.GONE);
+        //“AR相机”按钮
+        findViewById(R.id.ar).setOnClickListener(v -> {
+            Intent intent = new Intent();
+            intent.setClass(this, ARCameraActivity.class);
+            startActivity(intent);
+        });
         Json.init(getAssets());  //加载json
         new Thread(this::init).start();
         LocalDate date = LocalDate.now();
@@ -45,7 +51,6 @@ public class MainActivity extends AppCompatActivity {
                 LocalDate tmp = LocalDate.parse(Json.getObject(date.getYear(), i).getString("date"));
                 int stMonth = tmp.getMonthValue();
                 int stDay = tmp.getDayOfMonth();
-                System.out.println(stMonth + "-" + stDay);
                 if (month < stMonth) {
                     next = i;
                     break;
@@ -62,14 +67,7 @@ public class MainActivity extends AppCompatActivity {
             int finalMid = today;
             Integer finalNext = next;
             //“今天”按钮
-            findViewById(R.id.back).setOnClickListener((View view) -> {
-                try {
-                    solarTerm(date, finalMid, finalNext);
-                } catch (JSONException e) {
-                    Utils.crashByJson(this);
-                    e.printStackTrace();
-                }
-            });
+            findViewById(R.id.back).setOnClickListener((View view) -> solarTerm(date, finalMid, finalNext));
             //“关于”按钮
             findViewById(R.id.about).setOnClickListener((View view) -> {
                 Intent intent = new Intent();
@@ -90,7 +88,7 @@ public class MainActivity extends AppCompatActivity {
      * @param nextSt 当num==-1时启用，表示今天下一个的节气
      * @throws IllegalArgumentException 当num==-1时，l不应为null
      */
-    public void solarTerm(LocalDate date, int num, @Nullable Integer nextSt) throws JSONException, IllegalArgumentException {
+    public void solarTerm(LocalDate date, int num, @Nullable Integer nextSt) throws IllegalArgumentException {
         nowSt = num;
         Button lastButton = findViewById(R.id.last);
         Button nextButton = findViewById(R.id.next);
@@ -104,64 +102,55 @@ public class MainActivity extends AppCompatActivity {
             nextButton.setEnabled(false);
         }
         TextView textView = findViewById(R.id.today);
-        if (num == -1) {  //不是节气
-            if (nextSt == null) {
-                throw new IllegalArgumentException("当num==-1时，l不应为null");
+        try {
+            if (num == -1) {  //不是节气
+                if (nextSt == null) {
+                    throw new IllegalArgumentException("当num==-1时，l不应为null");
+                }
+                num = nextSt;
+                textView.setTextSize(20);
+                textView.setText("没有节气在今天呢");
+                findViewById(R.id.back).setEnabled(false);
+                ((TextView) findViewById(R.id.textView2)).setText("");
+                ((TextView) findViewById(R.id.date)).setText(date.format(DateTimeFormatter.ISO_DATE));
+                findViewById(R.id.info).setEnabled(false);
+                findViewById(R.id.gif_layout).setVisibility(View.GONE);
+            } else {
+                findViewById(R.id.gif_layout).setVisibility(View.VISIBLE);
+                VideoView gif = findViewById(R.id.gif_view);
+                gif.setVideoPath(getCacheDir().getPath() + "/" + Json.getObject(LocalDate.now().getYear(), num).getString("name") + ".mp4");
+                gif.start();
+                findViewById(R.id.back).setEnabled(true);
+                findViewById(R.id.textView2).setVisibility(View.GONE);
+                findViewById(R.id.info).setEnabled(true);
+                JSONObject object = Json.getObject(date.getYear(), num);
+                ((TextView) findViewById(R.id.date)).setText(object.getString("date"));
+                try {
+                    ((TextView) findViewById(R.id.today)).setText(object.getString("name"));
+                } catch (JSONException e) {
+                    Utils.crashByJson(this);
+                    e.printStackTrace();
+                }
+                ((TextView) findViewById(R.id.poem)).setText(object.getString("poem"));
+                ((TextView) findViewById(R.id.reason)).setText(object.getString("reason"));
+                final int finalNum = num;
+                //"详细"按钮
+                findViewById(R.id.info).setOnClickListener((View view) -> {
+                    Intent intent = new Intent();
+                    intent.setClass(MainActivity.this, InfoActivity.class);
+                    intent.putExtra("st", finalNum);
+                    startActivity(intent);
+                });
             }
-            num = nextSt;
-            textView.setTextSize(20);
-            textView.setText("没有节气在今天呢");
-            findViewById(R.id.back).setEnabled(false);
-            ((TextView) findViewById(R.id.textView2)).setText("");
-            ((TextView) findViewById(R.id.date)).setText(date.format(DateTimeFormatter.ISO_DATE));
-            findViewById(R.id.info).setEnabled(false);
-            findViewById(R.id.gif_layout).setVisibility(View.GONE);
-        } else {
-            findViewById(R.id.gif_layout).setVisibility(View.VISIBLE);
-            VideoView gif = findViewById(R.id.gif_view);
-            gif.setVideoPath(getCacheDir().getPath() + "/" + Json.getObject(LocalDate.now().getYear(), num).getString("name") + ".mp4");
-            gif.start();
-            findViewById(R.id.back).setEnabled(true);
-            findViewById(R.id.textView2).setVisibility(View.GONE);
-            findViewById(R.id.info).setEnabled(true);
-            JSONObject object = Json.getObject(date.getYear(), num);
-            ((TextView) findViewById(R.id.date)).setText(object.getString("date"));
-            try {
-                ((TextView) findViewById(R.id.today)).setText(object.getString("name"));
-            } catch (JSONException e) {
-                Utils.crashByJson(this);
-                e.printStackTrace();
-            }
-            ((TextView) findViewById(R.id.poem)).setText(object.getString("poem"));
-            ((TextView) findViewById(R.id.reason)).setText(object.getString("reason"));
-            final int finalNum = num;
-            //"详细"按钮
-            findViewById(R.id.info).setOnClickListener((View view) -> {
-                Intent intent = new Intent();
-                intent.setClass(MainActivity.this, InfoActivity.class);
-                intent.putExtra("st", finalNum);
-                startActivity(intent);
-            });
+        } catch (JSONException e) {
+            e.printStackTrace();
+            Utils.crashByJson(this);
         }
         int finalNum = num;
         //上一个
-        lastButton.setOnClickListener((View view) -> {
-            try {
-                solarTerm(date, finalNum - 1, null);
-            } catch (JSONException e) {
-                Utils.crashByJson(this);
-                e.printStackTrace();
-            }
-        });
+        lastButton.setOnClickListener((View view) -> solarTerm(date, finalNum - 1, null));
         //下一个
-        nextButton.setOnClickListener((View view) -> {
-            try {
-                solarTerm(date, finalNum + 1, null);
-            } catch (JSONException e) {
-                Utils.crashByJson(this);
-                e.printStackTrace();
-            }
-        });
+        nextButton.setOnClickListener((View view) -> solarTerm(date, finalNum + 1, null));
     }
 
     public void init() {
@@ -190,9 +179,13 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onResume() {
         super.onResume();
+        if (nowSt == -1) {
+            return;
+        }
+        solarTerm(LocalDate.now(), nowSt, null);
         try {
-            MainActivity.video.setVideoPath(getCacheDir() + "/" + Json.getObject(LocalDate.now().getYear(), nowSt).getString("name") + ".mp4");
-            MainActivity.video.start();
+            video.setVideoPath(getCacheDir() + "/" + Json.getObject(LocalDate.now().getYear(), nowSt).getString("name") + ".mp4");
+            video.start();
         } catch (JSONException e) {
             e.printStackTrace();
         }
