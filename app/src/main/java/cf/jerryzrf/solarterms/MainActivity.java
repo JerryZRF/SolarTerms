@@ -69,7 +69,6 @@ public final class MainActivity extends AppCompatActivity {
             View video = findViewById(R.id.gif_layout);
             video.setLongClickable(true);
             video.setOnTouchListener((v, event) -> {
-                System.out.println("1111111111111111111111111111111111111111111111");
                 switch (event.getAction()) {
                     case MotionEvent.ACTION_DOWN:
                         mPosX[0] = event.getRawX();
@@ -77,12 +76,18 @@ public final class MainActivity extends AppCompatActivity {
                     case MotionEvent.ACTION_UP:
                         video.performClick();
                         if (event.getRawX() - mPosX[0] > 50) {
+                            if (Boolean.FALSE.equals(Utils.isHeadOrTail(LocalDate.now().getYear(), nowSt))) {
+                                break;
+                            }
                             if (nowSt == null) {
                                 solarTerm(date, Utils.getLastSt(date.getYear(), finalNext), null);
                                 break;
                             }
                             solarTerm(date, Utils.getLastSt(date.getYear(), nowSt), null);
                         } else if (mPosX[0] - event.getRawX() > 50) {
+                            if (Boolean.TRUE.equals(Utils.isHeadOrTail(LocalDate.now().getYear(), nowSt))) {
+                                break;
+                            }
                             if (nowSt == null) {
                                 solarTerm(date, finalNext, null);
                                 break;
@@ -96,14 +101,6 @@ public final class MainActivity extends AppCompatActivity {
             });
 
             String finalToday = today;
-            //“今天”按钮
-            findViewById(R.id.back).setOnClickListener((View view) -> solarTerm(date, finalToday, finalNext));
-            //“关于”按钮
-            findViewById(R.id.about).setOnClickListener((View view) -> {
-                Intent intent = new Intent();
-                intent.setClass(MainActivity.this, AboutActivity.class);
-                startActivity(intent);
-            });
             solarTerm(date, today, nextSt);
         } catch (Exception e) {
             Utils.crashByJson(this);
@@ -131,9 +128,6 @@ public final class MainActivity extends AppCompatActivity {
                 textView.setText("没有节气在今天呢");
                 ((TextView) findViewById(R.id.textView)).setText("");
                 ((TextView) findViewById(R.id.date)).setText(date.format(DateTimeFormatter.ISO_DATE));
-
-                findViewById(R.id.back).setEnabled(false);
-                findViewById(R.id.info).setEnabled(false);
                 findViewById(R.id.gif_view).setVisibility(View.INVISIBLE);
             } else {
                 //背景视频
@@ -142,9 +136,7 @@ public final class MainActivity extends AppCompatActivity {
                 gif.start();
                 gif.setVisibility(View.VISIBLE);
 
-                findViewById(R.id.back).setEnabled(true);
                 findViewById(R.id.textView).setVisibility(View.GONE);
-                findViewById(R.id.info).setEnabled(true);
                 JSONObject mainConfig = Json.getMainConfig(st);
                 JSONObject dateConfig = Json.getDateConfig(date.getYear(), Utils.getNumByStName(date.getYear(), st));
                 ((TextView) findViewById(R.id.date)).setText(dateConfig.getString("date"));
@@ -156,13 +148,6 @@ public final class MainActivity extends AppCompatActivity {
                     e.printStackTrace();
                 }
                 ((TextView) findViewById(R.id.reason)).setText(mainConfig.getString("reason"));
-                //"详细"按钮
-                findViewById(R.id.info).setOnClickListener((View view) -> {
-                    Intent intent = new Intent();
-                    intent.setClass(MainActivity.this, InfoActivity.class);
-                    intent.putExtra("st", st);
-                    startActivity(intent);
-                });
             }
         } catch (JSONException e) {
             e.printStackTrace();
