@@ -12,6 +12,9 @@ android {
         versionCode 1
         versionName "dev.5"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        ndk {
+            abiFilters 'arm64-v8a', 'x86'
+        }
     }
 
     buildTypes {
@@ -51,9 +54,3 @@ dependencies {
     implementation 'com.google.ar.sceneform:core:1.17.1'
 
 }
-
-apply plugin: 'com.google.ar.sceneform.plugin'
-sceneform.asset('ar_data/obj.obj',
-        'default',
-        'ar_data/obj.sfa',
-        'src/main/assets')

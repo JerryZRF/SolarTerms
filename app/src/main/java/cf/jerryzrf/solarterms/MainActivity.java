@@ -22,22 +22,13 @@ import java.time.format.DateTimeFormatter;
  * @author JerryZRF
  */
 public class MainActivity extends AppCompatActivity {
-
     static int nowSt;
-    VideoView video;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        video = findViewById(R.id.gif_view);
         findViewById(R.id.gif_layout).setVisibility(View.GONE);
-        //“AR相机”按钮
-        findViewById(R.id.ar).setOnClickListener(v -> {
-            Intent intent = new Intent();
-            intent.setClass(this, ARCameraActivity.class);
-            startActivity(intent);
-        });
+
         Json.init(getAssets());  //加载json
         new Thread(this::init).start();
         LocalDate date = LocalDate.now();
@@ -110,16 +101,19 @@ public class MainActivity extends AppCompatActivity {
                 num = nextSt;
                 textView.setTextSize(20);
                 textView.setText("没有节气在今天呢");
-                findViewById(R.id.back).setEnabled(false);
                 ((TextView) findViewById(R.id.textView2)).setText("");
                 ((TextView) findViewById(R.id.date)).setText(date.format(DateTimeFormatter.ISO_DATE));
+
+                findViewById(R.id.back).setEnabled(false);
                 findViewById(R.id.info).setEnabled(false);
                 findViewById(R.id.gif_layout).setVisibility(View.GONE);
             } else {
+                //背景视频
                 findViewById(R.id.gif_layout).setVisibility(View.VISIBLE);
                 VideoView gif = findViewById(R.id.gif_view);
                 gif.setVideoPath(getCacheDir().getPath() + "/" + Json.getObject(LocalDate.now().getYear(), num).getString("name") + ".mp4");
                 gif.start();
+
                 findViewById(R.id.back).setEnabled(true);
                 findViewById(R.id.textView2).setVisibility(View.GONE);
                 findViewById(R.id.info).setEnabled(true);
@@ -184,6 +178,7 @@ public class MainActivity extends AppCompatActivity {
         }
         solarTerm(LocalDate.now(), nowSt, null);
         try {
+            VideoView video = findViewById(R.id.gif_view);
             video.setVideoPath(getCacheDir() + "/" + Json.getObject(LocalDate.now().getYear(), nowSt).getString("name") + ".mp4");
             video.start();
         } catch (JSONException e) {
