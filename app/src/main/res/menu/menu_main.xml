@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+      xmlns:app="http://schemas.android.com/apk/res-auto"
+      xmlns:tools="http://schemas.android.com/tools"
+      tools:context="com.jiapeng.munedemo.MainActivity" >
+    <item
+            android:id="@+id/menu_info"
+            android:orderInCategory="100"
+            android:title="更多关于此节气"
+            app:showAsAction="never"/>
+    <item
+            android:id="@+id/menu_today"
+            android:orderInCategory="100"
+            android:title="回到今天"
+            app:showAsAction="never"/>
+    <item
+            android:id="@+id/menu_about"
+            android:orderInCategory="100"
+            android:title="关于我们"
+            app:showAsAction="never"/>
+</menu>

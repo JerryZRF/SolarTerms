@@ -1,30 +1,26 @@
 package cf.jerryzrf.solarterms;
 
 import android.content.res.AssetManager;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
+import java.util.Random;
 
 /**
  * @author JerryZRF
  */
-public class Json {
-    static JSONObject object;
+public final class Json {
+    public static JSONObject mainConfig;
+    static JSONObject poems;
+    static JSONObject date;
 
     public static void init(AssetManager assetManager) {
         try {
-            InputStream is = assetManager.open("solar_terms.json");
-            BufferedReader reader = new BufferedReader(new InputStreamReader(is));
-            StringBuilder jsonStr = new StringBuilder();
-            String tmp;
-            while ((tmp = reader.readLine()) != null) {
-                jsonStr.append(tmp);
-            }
-            object = new JSONObject(jsonStr.toString());
-            is.close();
+            mainConfig = loadConfig(assetManager, "solar_terms.json");
+            poems = loadConfig(assetManager, "poems.json");
+            date = loadConfig(assetManager, "date.json");
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -34,10 +30,31 @@ public class Json {
     /** 终止支持年份 */
     private final static int END_YEAR = 2025;
 
-    public static JSONObject getObject(int year, int st) throws JSONException, IllegalArgumentException {
+    public static JSONObject getMainConfig(String st) throws JSONException {
+        return mainConfig.getJSONObject(st);
+    }
+
+    public static String getPoems(String st) throws JSONException {
+        JSONArray array = poems.getJSONArray(st);
+        int i = (new Random()).nextInt(array.length());
+        return (String) array.get(i);
+    }
+
+    public static JSONObject getDateConfig(int year, int st) throws JSONException {
         if (!(year >= START_YEAR && year <= END_YEAR)) {
             throw new IllegalArgumentException("仅支持2022~2025使用");
         }
-        return object.getJSONArray(String.valueOf(year)).getJSONObject(st);
+        return date.getJSONArray(String.valueOf(year)).getJSONObject(st);
+    }
+
+    public static JSONObject loadConfig(AssetManager assetManager, String fileName) throws IOException, JSONException{
+        InputStream is = assetManager.open(fileName);
+        BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+        StringBuilder jsonStr = new StringBuilder();
+        String tmp;
+        while ((tmp = reader.readLine()) != null) {
+            jsonStr.append(tmp);
+        }
+        return new JSONObject(jsonStr.toString());
     }
 }

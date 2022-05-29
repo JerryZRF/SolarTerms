@@ -6,34 +6,31 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import org.json.JSONObject;
 
-import java.time.LocalDate;
-
 /**
  * @author JerryZRF
  */
-public class InfoActivity extends AppCompatActivity {
+public final class InfoActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_info);
-        int st = getIntent().getIntExtra("st", -1);
+        String st = getIntent().getStringExtra("st");
         JSONObject object;
         try {
-            object = Json.getObject(LocalDate.now().getYear(), st);
-            final String stName = object.getString("name");
+            object = Json.getMainConfig(st);
             TextView content = findViewById(R.id.content);
-            setTitle(stName + "的简介");
+            setTitle(st + "的简介");
             content.setText(object.getString("introduction"));
-            ((BottomNavigationView)findViewById(R.id.nav_view)).setOnNavigationItemSelectedListener((item) -> {
+            ((BottomNavigationView) findViewById(R.id.nav_view)).setOnItemSelectedListener((item) -> {
                 try {
                     switch (item.getItemId()) {
                         case R.id.item_introduction:
-                            setTitle(stName + "的简介");
+                            setTitle(st + "的简介");
                             content.setText(object.getString("introduction"));
                             break;
                         case R.id.item_xisu:
-                            setTitle(stName + "的习俗");
+                            setTitle(st + "的习俗");
                             content.setText(object.getString("xisu"));
                             break;
                         case R.id.item_yiji:
