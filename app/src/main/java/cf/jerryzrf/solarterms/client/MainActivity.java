@@ -38,7 +38,7 @@ public final class MainActivity extends AppCompatActivity {
             solarTerm(date, nowSt, null);
         }
         findViewById(R.id.gif_view).setVisibility(View.INVISIBLE);
-        Json.init(getAssets());  //加载json
+        Json.init(getAssets(), getDataDir());  //加载json
         new Thread(this::init).start();
         int month = date.getMonthValue();
         int day = date.getDayOfMonth();
@@ -46,7 +46,7 @@ public final class MainActivity extends AppCompatActivity {
         try {
             //找今天是什么节气
             for (int i = 0; i < 24; i++) {
-                JSONObject dateConfig = Json.getDateConfig(date.getYear(), i);
+                JSONObject dateConfig = Json.getDateData(date.getYear(), i);
                 LocalDate tmp = LocalDate.parse(dateConfig.getString("date"));
                 int stMonth = tmp.getMonthValue();
                 int stDay = tmp.getDayOfMonth();
@@ -137,12 +137,12 @@ public final class MainActivity extends AppCompatActivity {
                 gif.setVisibility(View.VISIBLE);
 
                 findViewById(R.id.textView).setVisibility(View.GONE);
-                JSONObject mainConfig = Json.getMainConfig(st);
-                JSONObject dateConfig = Json.getDateConfig(date.getYear(), Utils.getNumByStName(date.getYear(), st));
+                JSONObject mainConfig = Json.getMainData(st);
+                JSONObject dateConfig = Json.getDateData(date.getYear(), Utils.getNumByStName(date.getYear(), st));
                 ((TextView) findViewById(R.id.date)).setText(dateConfig.getString("date"));
                 try {
                     ((TextView) findViewById(R.id.today)).setText(st);
-                    ((TextView) findViewById(R.id.poem)).setText(Json.getPoems(st));
+                    ((TextView) findViewById(R.id.poem)).setText(Json.getPoemsData(st));
                 } catch (JSONException e) {
                     Utils.crashByJson(this);
                     e.printStackTrace();
@@ -157,7 +157,7 @@ public final class MainActivity extends AppCompatActivity {
 
     public void init() {
         AssetManager assetManager = getAssets();
-        for (Iterator<String> it = Json.mainConfig.keys(); it.hasNext(); ) {
+        for (Iterator<String> it = Json.mainData.keys(); it.hasNext(); ) {
             String fileName = it.next();
             File out = new File(this.getDataDir(), fileName + ".mp4");
             if (out.exists()) {
@@ -196,8 +196,8 @@ public final class MainActivity extends AppCompatActivity {
             case R.id.menu_today:
                 solarTerm(LocalDate.now(), null, nextSt);
                 break;
-            case R.id.menu_about:
-                intent.setClass(this, AboutActivity.class);
+            case R.id.menu_settings:
+                intent.setClass(this, SettingActivity.class);
                 startActivity(intent);
                 break;
             case R.id.menu_info:

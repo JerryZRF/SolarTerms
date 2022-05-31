@@ -47,9 +47,9 @@ public final class Utils {
 
     public static Boolean isHeadOrTail(int year, String st) {
         try {
-            if (Json.getDateConfig(year, 0).getString("name").equals(st)){
+            if (Json.getDateData(year, 0).getString("name").equals(st)) {
                 return false;
-            } else if (Json.getDateConfig(year, 23).getString("name").equals(st)) {
+            } else if (Json.getDateData(year, 23).getString("name").equals(st)) {
                 return true;
             } else {
                 return null;
@@ -63,7 +63,7 @@ public final class Utils {
     public static int getNumByStName(int year, String st) {
         try {
             for (int i = 0; i < 24; i++) {
-                JSONObject object = Json.getDateConfig(year, i);
+                JSONObject object = Json.getDateData(year, i);
                 if (object.getString("name").equals(st)) {
                     return i;
                 }
@@ -76,7 +76,7 @@ public final class Utils {
 
     public static String getNextSt(int year, String st) {
         try {
-            return Json.getDateConfig(year, getNumByStName(year, st) + 1).getString("name");
+            return Json.getDateData(year, getNumByStName(year, st) + 1).getString("name");
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -85,7 +85,7 @@ public final class Utils {
 
     public static String getLastSt(int year, String st) {
         try {
-            return Json.getDateConfig(year, getNumByStName(year, st) - 1).getString("name");
+            return Json.getDateData(year, getNumByStName(year, st) - 1).getString("name");
         } catch (JSONException e) {
             e.printStackTrace();
         }

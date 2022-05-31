@@ -65,7 +65,7 @@ public final class InfoActivity extends AppCompatActivity {
         String st = getIntent().getStringExtra("st");
         JSONObject object;
         try {
-            object = Json.getMainConfig(st);
+            object = Json.getMainData(st);
             nowId = 0;
             setTitle(st + "的简介");
             content.setText(object.getString("introduction"));
@@ -98,7 +98,7 @@ public final class InfoActivity extends AppCompatActivity {
         JSONObject object;
         nowId = id;
         try {
-            object = Json.getMainConfig(st);
+            object = Json.getMainData(st);
             switch (id) {
                 case 0:
                     setTitle(st + "的简介");
