@@ -1,4 +1,4 @@
-package cf.jerryzrf.solarterms;
+package cf.jerryzrf.solarterms.client;
 
 import android.app.Activity;
 import android.app.AlertDialog;

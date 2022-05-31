@@ -1,4 +1,4 @@
-package cf.jerryzrf.solarterms;
+package cf.jerryzrf.solarterms.client;
 
 import android.os.Bundle;
 import android.widget.TextView;

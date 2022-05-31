@@ -2,11 +2,14 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
             android:id="@+id/item_introduction"
-            android:title="介绍" />
+            android:title="介绍"/>
     <item
             android:id="@+id/item_xisu"
-            android:title="习俗" />
+            android:title="习俗"/>
     <item
             android:id="@+id/item_yiji"
-            android:title="宜忌" />
+            android:title="宜忌"/>
+    <item
+            android:id="@+id/item_photos"
+            android:title="美图"/>
 </menu>
