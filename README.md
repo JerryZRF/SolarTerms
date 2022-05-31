@@ -1,4 +1,4 @@
-#  SolarTerm
+#  SolarTerms
 
 一个关于二十四节气的Android App
 
@@ -7,6 +7,8 @@
 一台Android 8.1及以上的SoC使用arm-v8a架构的手机
 
 ## 安装
+
+https://github.com/JerryZRF/SolarTerms
 
 从Release下载最新的apk，安装。
 

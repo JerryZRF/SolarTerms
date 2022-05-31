@@ -1,4 +1,4 @@
-package cf.jerryzrf.solarterms;
+package cf.jerryzrf.solarterms.client;
 
 import android.content.res.AssetManager;
 import org.json.JSONArray;

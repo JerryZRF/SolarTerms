@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="cf.jerryzrf.solarterms">
+          package="cf.jerryzrf.solarterms.client">
     <application
             android:allowBackup="true"
             android:icon="@drawable/icon"
@@ -9,13 +9,13 @@
             android:supportsRtl="true"
             android:theme="@style/Theme.SolarTerms">
         <activity
-                android:name=".InfoActivity"
+                android:name="cf.jerryzrf.solarterms.client.InfoActivity"
                 android:exported="true" />
         <activity
-                android:name=".AboutActivity"
+                android:name="cf.jerryzrf.solarterms.client.AboutActivity"
                 android:exported="true"/>
         <activity
-                android:name=".MainActivity"
+                android:name="cf.jerryzrf.solarterms.client.MainActivity"
                 android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
