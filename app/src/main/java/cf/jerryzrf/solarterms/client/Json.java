@@ -1,13 +1,11 @@
 package cf.jerryzrf.solarterms.client;
 
 import android.content.res.AssetManager;
-import org.jetbrains.annotations.NotNull;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.*;
-import java.nio.charset.StandardCharsets;
 import java.util.Random;
 
 /**
@@ -18,21 +16,12 @@ public final class Json {
     static JSONObject poemsData;
     static JSONObject dateData;
     static JSONObject config;
-    static File configFile;
 
     public static void init(AssetManager assetManager, File dataFolder) {
-        try {
-            config.put("cnDateFormat", false);
-            config.put("cache", true);
-            config.put("photo_num", 10);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
         try {
             mainData = loadData(assetManager, "solar_terms.json");
             poemsData = loadData(assetManager, "poems.json");
             dateData = loadData(assetManager, "date.json");
-            config = loadConfig(dataFolder);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -66,20 +55,6 @@ public final class Json {
 
     private static JSONObject loadData(AssetManager assetManager, String fileName) throws IOException, JSONException {
         InputStream is = assetManager.open(fileName);
-        return getJsonObject(is);
-    }
-
-    private static JSONObject loadConfig(File folder) throws IOException, JSONException {
-        configFile = new File(folder, "config.json");
-        if (!configFile.exists()) {
-            save();
-        }
-        FileInputStream is = new FileInputStream(configFile);
-        return getJsonObject(is);
-    }
-
-    @NotNull
-    private static JSONObject getJsonObject(InputStream is) throws IOException, JSONException {
         BufferedReader reader = new BufferedReader(new InputStreamReader(is));
         StringBuilder jsonStr = new StringBuilder();
         String tmp;
@@ -87,24 +62,5 @@ public final class Json {
             jsonStr.append(tmp);
         }
         return new JSONObject(jsonStr.toString());
-    }
-
-    public static Object getConfig(String key) throws JSONException {
-        return config.get(key);
-    }
-
-    public static void setConfig(String key, Object value) throws JSONException {
-        config.put(key, value);
-        try {
-            save();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    private static void save() throws IOException {
-        FileOutputStream fos = new FileOutputStream(configFile);
-        fos.write(config.toString().getBytes(StandardCharsets.UTF_8));
-        fos.close();
     }
 }

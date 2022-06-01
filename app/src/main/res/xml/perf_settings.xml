@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
+    <SwitchPreferenceCompat
+            app:key="cnDateFormat"
+            app:title="使用农历顺序展示"/>
+
+    <SeekBarPreference
+            app:key="photo_num"
+            app:title="单次刷新图片数"
+            app:defaultValue="10"
+            app:min="1"
+            app:summary=""
+            app:showSeekBarValue="true"/>
+
+    <Preference
+            app:key="about"
+            app:title="关于我们"/>
+
+</PreferenceScreen>

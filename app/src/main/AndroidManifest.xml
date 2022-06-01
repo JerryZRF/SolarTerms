@@ -10,8 +10,9 @@
             android:supportsRtl="true"
             android:theme="@style/Theme.SolarTerms">
         <activity
-                android:name=".SettingActivity"
-                android:exported="true"/>
+                android:name=".SettingsActivity"
+                android:exported="true"
+                android:label="@string/title_activity_settings"/>
         <activity
                 android:name=".InfoActivity"
                 android:exported="true"/>

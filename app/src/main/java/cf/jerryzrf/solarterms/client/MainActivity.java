@@ -197,7 +197,7 @@ public final class MainActivity extends AppCompatActivity {
                 solarTerm(LocalDate.now(), null, nextSt);
                 break;
             case R.id.menu_settings:
-                intent.setClass(this, SettingActivity.class);
+                intent.setClass(this, SettingsActivity.class);
                 startActivity(intent);
                 break;
             case R.id.menu_info:
