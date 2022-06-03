@@ -27,7 +27,8 @@ public final class Utils {
         new Thread(() -> {
             try {
                 Thread.sleep(5000);
-                System.exit(1);
+
+                //    System.exit(1);
             } catch (InterruptedException ex) {
                 ex.printStackTrace();
             }

@@ -7,12 +7,10 @@ android {
 
     defaultConfig {
         applicationId "cf.jerryzrf.solarterms"
-        minSdk 27
+        minSdk 26
         targetSdk 32
         versionCode 1
         versionName "1.0.0"
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-
     }
 
     buildTypes {
@@ -46,7 +44,9 @@ dependencies {
     implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.4.1'
     implementation 'com.google.android.material:material:1.6.0'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
-    implementation "androidx.preference:preference:1.2.0"
+    implementation 'androidx.preference:preference:1.2.0'
 
     implementation 'cn.hutool:hutool-all:5.8.2'
+    implementation 'com.github.HuanTanSheng:EasyPhotos:3.1.5'
+    implementation 'com.github.bumptech.glide:glide:4.8.0'
 }

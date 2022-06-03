@@ -5,25 +5,53 @@ import com.alibaba.fastjson.JSONObject;
 
 import java.io.*;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author JerryZRF
  */
 public final class User {
-    InputStream is;
-    OutputStream os;
+    PrintWriter writer;
+    BufferedReader reader;
+    Socket socket;
+
+    Map<String, List<String>> notUpdated = new HashMap<>();  //客户端没有的图片
+
     public User(Socket s) throws IOException {
-        is = s.getInputStream();
-        os = s.getOutputStream();
+        System.out.println("有客户端连接，ip:" + s.getInetAddress().getHostAddress());
+        socket = s;
+        writer = new PrintWriter(new OutputStreamWriter(s.getOutputStream(), StandardCharsets.UTF_8), true);
+        reader = new BufferedReader(new InputStreamReader(s.getInputStream(), StandardCharsets.UTF_8));
+        if (!init()) {
+            System.out.println("ip为" + s.getInetAddress().getHostAddress() + "的客户端被阻止连接");
+            return;
+        }
+        (new Thread(this::receive)).start();
+    }
+
+    public static String getSha1(byte[] source) {
+        char[] hexDigits = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+                'a', 'b', 'c', 'd', 'e', 'f'};
+        try {
+            MessageDigest mdTemp = MessageDigest.getInstance("SHA1");
+            mdTemp.update(source);
+            byte[] md = mdTemp.digest();
+            int j = md.length;
+            char[] buf = new char[j * 2];
+            int k = 0;
+            for (byte byte0 : md) {
+                buf[k++] = hexDigits[byte0 >>> 4 & 0xf];
+                buf[k++] = hexDigits[byte0 & 0xf];
+            }
+            return new String(buf);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     public void receive() {
-        BufferedReader reader = new BufferedReader(new InputStreamReader(is));
         try {
             while (true) {
                 process(reader.readLine());
@@ -37,83 +65,100 @@ public final class User {
         }
     }
 
+    private boolean init() {
+        JSONObject resultJson = new JSONObject();
+        File banFile = new File("./ban.json");
+        resultJson.put("code", 0);
+        if (banFile.exists()) {
+            try {
+                BufferedReader reader = new BufferedReader(new FileReader(banFile));
+                JSONArray array = JSONArray.parseArray(reader.readLine());
+                if (array.contains(socket.getInetAddress().getHostAddress())) {
+                    resultJson.put("code", 1);
+                    writer.println(JSONObject.toJSONString(resultJson));
+                    onDisable();
+                    return false;
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        writer.println(JSONObject.toJSONString(resultJson));
+        return true;
+    }
+
     private void process(String data) {
-        JSONObject json = JSONObject.parseObject(new String(Base64.getDecoder().decode(data)));
-        switch (json.getString("type")) {
-            case "up":
+        System.out.println("接收到数据");
+        JSONObject json = JSONObject.parseObject(data);
+        switch (json.getIntValue("code")) {
+            case 0 -> {
                 JSONObject result = new JSONObject();
-                json.put("code", uploadPhoto(json));
-                PrintWriter pw = new PrintWriter(os, true);
-                pw.println(Base64.getEncoder().encodeToString(JSONObject.toJSONBytes(result)));
-                break;
-            case "down":
-                downloadPhotos(json);
-                break;
-            default:
+                result.put("code", uploadPhotos(json));
+                writer.println(JSONObject.toJSONString(result));
+            }
+            case 1 -> downloadPhotos(json);
+            default -> {
+            }
         }
     }
 
-    private int uploadPhoto(JSONObject json) {
+    private int uploadPhotos(JSONObject json) {
         try {
-            byte[] data = Base64.getDecoder().decode(json.getString("photo"));
-            File outFile = new File("./cache" + json.getString("st") + "/" +
-                            getSha1(data));
-            if (outFile.exists()) {
-                return 2;  //文件已存在
+            for (Object basePhoto : json.getJSONArray("photos")) {
+                byte[] data = Base64.getDecoder().decode((String) basePhoto);
+                File outFile = new File("./cache/" + json.getString("st") + "/" + getSha1(data) + ".jpeg");
+                System.out.println("已保存为" + outFile.getPath());
+                if (outFile.exists()) {
+                    return 2;  //文件已存在
+                } else {
+                    outFile.createNewFile();
+                }
+                DataOutputStream dos = new DataOutputStream(new FileOutputStream(outFile));
+                dos.write(data);
+                dos.close();
+                System.out.println("收到来自用户" + socket.getInetAddress().getHostAddress() + "的一张图片");
+                return 0;  //上传成功
             }
-            DataOutputStream dos = new DataOutputStream(new FileOutputStream(outFile));
-            dos.write(data);
-            return 0;  //上传成功
         } catch (Exception e) {
             e.printStackTrace();
-            return 3;  //服务端错误
         }
+        return 3;  //服务端错误
     }
 
     private void downloadPhotos(JSONObject json) {
         String st = json.getString("st");
         File[] filesArray = (new File("./cache/" + st)).listFiles();
-        List<String> photoList = new ArrayList<>();
         JSONArray array = json.getJSONArray("local");
-        for (File f : filesArray) {
-            if (!array.contains(f.getName())) {
-                try (FileInputStream fis = new FileInputStream(f)) {
-                    photoList.add(Base64.getEncoder().encodeToString(fis.readAllBytes()));
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    return;
+        if (!notUpdated.containsKey(st)) {
+            List<String> notUpdatedList = new ArrayList<>();
+            for (File f : filesArray) {
+                if (!array.contains(f.getName())) {
+                    try (FileInputStream fis = new FileInputStream(f)) {
+                        notUpdatedList.add(Base64.getEncoder().encodeToString(fis.readAllBytes()));
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        return;
+                    }
                 }
             }
+            notUpdated.put(st, notUpdatedList);
         }
         JSONObject result = new JSONObject();
         JSONArray resultArray = new JSONArray();
-        resultArray.addAll(photoList.subList(0, json.getIntValue("num")));
+        resultArray.addAll(notUpdated.get(st).subList(0, json.getIntValue("num")));
+        notUpdated.get(st).removeAll(resultArray);
         result.put("data", resultArray);
-        PrintWriter pw = new PrintWriter(os, true);
-        pw.println(Base64.getEncoder().encodeToString(JSONObject.toJSONBytes(result)));
+        writer.println(JSONObject.toJSONString(result));
     }
 
     public void onDisable() {
         try {
-            is.close();
+            reader.close();
+            writer.close();
+            socket.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
-
-    public static String getSha1(byte[] input) {
-        MessageDigest mDigest;
-        try {
-            mDigest = MessageDigest.getInstance("SHA1");
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-            return null;
-        }
-        byte[] result = mDigest.digest(input);
-        StringBuilder sb = new StringBuilder();
-        for (byte b : result) {
-            sb.append(Integer.toString((b & 0xff) + 0x100, 16).substring(1));
-        }
-        return sb.toString();
-    }
 }
+
