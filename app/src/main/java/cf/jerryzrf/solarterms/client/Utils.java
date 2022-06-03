@@ -13,6 +13,10 @@ import java.io.OutputStream;
  * @author JerryZRF
  */
 public final class Utils {
+
+    public static final String[] cnStName =
+            {"立春", "雨水", "惊蛰", "春分", "清明", "谷雨", "立夏", "小满", "芒种", "夏至", "小暑", "大暑", "立秋", "处暑", "白露", "秋分", "寒露", "霜降", "立冬", "小雪", "大雪", "冬至", "小寒", "大寒"};
+
     public static void crashByJson(Activity activity) {
         AlertDialog errorDialog = new AlertDialog.Builder(activity)
                 .setTitle("致命错误！")
@@ -45,15 +49,22 @@ public final class Utils {
         is.close();
     }
 
-    public static Boolean isHeadOrTail(int year, String st) {
+    public static Boolean isHeadOrTail(int year, String st, boolean cnDateFormat) {
         try {
-            if (Json.getDateData(year, 0).getString("name").equals(st)) {
-                return false;
-            } else if (Json.getDateData(year, 23).getString("name").equals(st)) {
-                return true;
+            if (cnDateFormat) {
+                if (getNumByCnName(st) == 0) {
+                    return false;
+                } else if (getNumByCnName(st) == 23) {
+                    return true;
+                }
             } else {
-                return null;
+                if (Json.getDateData(year, 0).getString("name").equals(st)) {
+                    return false;
+                } else if (Json.getDateData(year, 23).getString("name").equals(st)) {
+                    return true;
+                }
             }
+            return null;
         } catch (JSONException e) {
             e.printStackTrace();
             return null;
@@ -74,21 +85,32 @@ public final class Utils {
         return -1;
     }
 
-    public static String getNextSt(int year, String st) {
+    public static String getNextSt(int year, String st, boolean cnFormat) {
         try {
-            return Json.getDateData(year, getNumByStName(year, st) + 1).getString("name");
+            return cnFormat ? cnStName[getNumByCnName(st) + 1] :
+                    Json.getDateData(year, getNumByStName(year, st) + 1).getString("name");
         } catch (JSONException e) {
             e.printStackTrace();
         }
         return null;
     }
 
-    public static String getLastSt(int year, String st) {
+    public static String getLastSt(int year, String st, boolean cnFormat) {
         try {
-            return Json.getDateData(year, getNumByStName(year, st) - 1).getString("name");
+            return cnFormat ? cnStName[getNumByCnName(st) - 1] :
+                    Json.getDateData(year, getNumByStName(year, st) - 1).getString("name");
         } catch (JSONException e) {
             e.printStackTrace();
         }
         return null;
+    }
+
+    public static int getNumByCnName(Object target) {
+        for (int i = 0; i < Utils.cnStName.length; i++) {
+            if (((Object[]) Utils.cnStName)[i].equals(target)) {
+                return i;
+            }
+        }
+        return -1;
     }
 }

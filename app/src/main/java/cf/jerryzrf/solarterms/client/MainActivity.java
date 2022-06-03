@@ -12,6 +12,8 @@ import android.widget.Toast;
 import android.widget.VideoView;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import cn.hutool.core.date.ChineseDate;
+import cn.hutool.core.date.DateUtil;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -27,8 +29,8 @@ import java.util.Iterator;
  */
 public final class MainActivity extends AppCompatActivity {
     String nowSt = null;
-
     String nextSt;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -63,7 +65,7 @@ public final class MainActivity extends AppCompatActivity {
                     }
                 }
             }
-
+            //滑动切换节气
             final float[] mPosX = {0};
             String finalNext = nextSt;
             View video = findViewById(R.id.gif_layout);
@@ -75,24 +77,25 @@ public final class MainActivity extends AppCompatActivity {
                         break;
                     case MotionEvent.ACTION_UP:
                         video.performClick();
+                        boolean cn = getSharedPreferences("cf.jerryzrf.solarterms_preferences", MODE_PRIVATE).getBoolean("cnDateFormat", false);
                         if (event.getRawX() - mPosX[0] > 50) {
-                            if (Boolean.FALSE.equals(Utils.isHeadOrTail(LocalDate.now().getYear(), nowSt))) {
+                            if (Boolean.FALSE.equals(Utils.isHeadOrTail(LocalDate.now().getYear(), nowSt, cn))) {
                                 break;
                             }
                             if (nowSt == null) {
-                                solarTerm(date, Utils.getLastSt(date.getYear(), finalNext), null);
+                                solarTerm(date, Utils.getLastSt(date.getYear(), finalNext, cn), null);
                                 break;
                             }
-                            solarTerm(date, Utils.getLastSt(date.getYear(), nowSt), null);
+                            solarTerm(date, Utils.getLastSt(date.getYear(), nowSt, cn), null);
                         } else if (mPosX[0] - event.getRawX() > 50) {
-                            if (Boolean.TRUE.equals(Utils.isHeadOrTail(LocalDate.now().getYear(), nowSt))) {
+                            if (Boolean.TRUE.equals(Utils.isHeadOrTail(LocalDate.now().getYear(), nowSt, cn))) {
                                 break;
                             }
                             if (nowSt == null) {
                                 solarTerm(date, finalNext, null);
                                 break;
                             }
-                            solarTerm(date, Utils.getNextSt(date.getYear(), nowSt), null);
+                            solarTerm(date, Utils.getNextSt(date.getYear(), nowSt, cn), null);
                         }
                         break;
                     default:
@@ -100,7 +103,6 @@ public final class MainActivity extends AppCompatActivity {
                 return true;
             });
 
-            String finalToday = today;
             solarTerm(date, today, nextSt);
         } catch (Exception e) {
             Utils.crashByJson(this);
@@ -110,7 +112,8 @@ public final class MainActivity extends AppCompatActivity {
 
     /**
      * 在主页面显示指定节气
-     * @param date 当前日期
+     *
+     * @param date   当前日期
      * @param nextSt 当num==-1时启用，表示今天下一个的节气
      * @throws IllegalArgumentException 当num==-1时，l不应为null
      */
@@ -118,16 +121,20 @@ public final class MainActivity extends AppCompatActivity {
         nowSt = st;
         ((TextView) findViewById(R.id.poem)).setText("");
         ((TextView) findViewById(R.id.reason)).setText("");
-        TextView textView = findViewById(R.id.today);
+        TextView today = findViewById(R.id.today);
+        boolean isCn = getSharedPreferences("cf.jerryzrf.solarterms_preferences", MODE_PRIVATE).getBoolean("cnDateFormat", false);
         try {
             if (st == null) {  //不是节气
                 if (nextSt == null) {
                     throw new IllegalArgumentException("当num==-1时，l不应为null");
                 }
-                textView.setTextSize(20);
-                textView.setText("没有节气在今天呢");
-                ((TextView) findViewById(R.id.textView)).setText("");
-                ((TextView) findViewById(R.id.date)).setText(date.format(DateTimeFormatter.ISO_DATE));
+                today.setTextSize(20);
+                today.setText("没有节气在今天呢");
+                if (isCn) {
+                    ((TextView) findViewById(R.id.date)).setText((new ChineseDate(DateUtil.date())).toString());
+                } else {
+                    ((TextView) findViewById(R.id.date)).setText(date.format(DateTimeFormatter.ISO_DATE));
+                }
                 findViewById(R.id.gif_view).setVisibility(View.INVISIBLE);
             } else {
                 //背景视频
@@ -136,18 +143,20 @@ public final class MainActivity extends AppCompatActivity {
                 gif.start();
                 gif.setVisibility(View.VISIBLE);
 
-                findViewById(R.id.textView).setVisibility(View.GONE);
-                JSONObject mainConfig = Json.getMainData(st);
-                JSONObject dateConfig = Json.getDateData(date.getYear(), Utils.getNumByStName(date.getYear(), st));
+                JSONObject mainData = Json.getMainData(st);
+                JSONObject dateConfig = isCn ?
+                        Json.getCnDateData(new ChineseDate(DateUtil.date()).getCyclical(), Utils.getNumByCnName(st)) :
+                        Json.getDateData(date.getYear(), Utils.getNumByStName(date.getYear(), st));
                 ((TextView) findViewById(R.id.date)).setText(dateConfig.getString("date"));
                 try {
-                    ((TextView) findViewById(R.id.today)).setText(st);
+                    today.setTextSize(36);
+                    today.setText(st);
                     ((TextView) findViewById(R.id.poem)).setText(Json.getPoemsData(st));
                 } catch (JSONException e) {
                     Utils.crashByJson(this);
                     e.printStackTrace();
                 }
-                ((TextView) findViewById(R.id.reason)).setText(mainConfig.getString("reason"));
+                ((TextView) findViewById(R.id.reason)).setText(mainData.getString("reason"));
             }
         } catch (JSONException e) {
             e.printStackTrace();
@@ -159,7 +168,7 @@ public final class MainActivity extends AppCompatActivity {
         AssetManager assetManager = getAssets();
         for (Iterator<String> it = Json.mainData.keys(); it.hasNext(); ) {
             String fileName = it.next();
-            File out = new File(this.getDataDir(), fileName + ".mp4");
+            File out = new File(getDataDir(), fileName + ".mp4");
             if (out.exists()) {
                 continue;
             }

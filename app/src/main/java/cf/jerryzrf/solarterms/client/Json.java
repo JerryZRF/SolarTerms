@@ -15,26 +15,18 @@ public final class Json {
     public static JSONObject mainData;
     static JSONObject poemsData;
     static JSONObject dateData;
-    static JSONObject config;
+    static JSONObject cnDateData;
 
     public static void init(AssetManager assetManager, File dataFolder) {
         try {
             mainData = loadData(assetManager, "solar_terms.json");
             poemsData = loadData(assetManager, "poems.json");
             dateData = loadData(assetManager, "date.json");
+            cnDateData = loadData(assetManager, "date_cn.json");
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
-
-    /**
-     * 起始支持年份
-     */
-    private final static int START_YEAR = 2022;
-    /**
-     * 终止支持年份
-     */
-    private final static int END_YEAR = 2025;
 
     public static JSONObject getMainData(String st) throws JSONException {
         return mainData.getJSONObject(st);
@@ -46,11 +38,20 @@ public final class Json {
         return (String) array.get(i);
     }
 
-    public static JSONObject getDateData(int year, int st) throws JSONException {
-        if (!(year >= START_YEAR && year <= END_YEAR)) {
+    public static JSONObject getDateData(int year, int st) {
+        try {
+            return dateData.getJSONArray(String.valueOf(year)).getJSONObject(st);
+        } catch (JSONException e) {
             throw new IllegalArgumentException("仅支持2022~2025使用");
         }
-        return dateData.getJSONArray(String.valueOf(year)).getJSONObject(st);
+    }
+
+    public static JSONObject getCnDateData(String year, int st) {
+        try {
+            return cnDateData.getJSONArray(year).getJSONObject(st);
+        } catch (JSONException e) {
+            throw new IllegalArgumentException("仅支持壬寅年~乙巳年使用");
+        }
     }
 
     private static JSONObject loadData(AssetManager assetManager, String fileName) throws IOException, JSONException {

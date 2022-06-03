@@ -14,34 +14,24 @@ import androidx.preference.SwitchPreference;
  * @author JerryZRF
  */
 public class SettingFragment extends PreferenceFragmentCompat implements Preference.OnPreferenceClickListener {
-    private SharedPreferences sharedPreferences = null;
-
     @Override
     public void onCreatePreferences(@Nullable Bundle savedInstanceState, @Nullable String rootKey) {
         setPreferencesFromResource(R.xml.perf_settings, rootKey);
-
-        sharedPreferences = getContext().getSharedPreferences("default ", Context.MODE_PRIVATE);
-        Preference loginDjiAccount = findPreference("login_dji_account");
-        if (loginDjiAccount != null) {
-            loginDjiAccount.setOnPreferenceClickListener(this);
-        }
         ((SeekBarPreference) findPreference("photo_num")).setMax(20);
     }
 
     @Override
     public boolean onPreferenceClick(Preference preference) {
-        System.out.println(222222);
-        SharedPreferences.Editor editor = sharedPreferences.edit();
+        SharedPreferences.Editor editor = getContext().getSharedPreferences("cf.jerryzrf.solarterms_preferences", Context.MODE_PRIVATE).edit();
         switch (preference.getKey()) {
             case "cnDateFormat":
-                editor.putBoolean("cnDateFormat", ((SwitchPreference) preference).isChecked());
+                editor.putBoolean("cnDateFormat", ((SwitchPreference) preference).isChecked()).apply();
                 break;
             case "photo_num":
-                editor.putInt("photo_num", ((SeekBarPreference) preference).getValue());
+                editor.putInt("photo_num", ((SeekBarPreference) preference).getValue()).apply();
                 break;
             default:
         }
-        editor.apply();
         return true;
     }
 
