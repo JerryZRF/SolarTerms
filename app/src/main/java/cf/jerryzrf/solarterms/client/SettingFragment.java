@@ -9,6 +9,7 @@ import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.SeekBarPreference;
 import androidx.preference.SwitchPreference;
+import cf.jerryzrf.solarterms.client.activities.AboutActivity;
 
 /**
  * @author JerryZRF

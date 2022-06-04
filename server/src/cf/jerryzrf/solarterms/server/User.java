@@ -7,6 +7,7 @@ import java.io.*;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.*;
 
 /**
@@ -31,38 +32,14 @@ public final class User {
         (new Thread(this::receive)).start();
     }
 
-    public static String getSha1(byte[] source) {
-        char[] hexDigits = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-                'a', 'b', 'c', 'd', 'e', 'f'};
+    public static String getMd5(byte[] data) {
         try {
-            MessageDigest mdTemp = MessageDigest.getInstance("SHA1");
-            mdTemp.update(source);
-            byte[] md = mdTemp.digest();
-            int j = md.length;
-            char[] buf = new char[j * 2];
-            int k = 0;
-            for (byte byte0 : md) {
-                buf[k++] = hexDigits[byte0 >>> 4 & 0xf];
-                buf[k++] = hexDigits[byte0 & 0xf];
-            }
-            return new String(buf);
-        } catch (Exception e) {
-            return null;
-        }
-    }
-
-    public void receive() {
-        try {
-            while (true) {
-                process(reader.readLine());
-            }
-        } catch (IOException e) {
-            if ("Connection reset".equalsIgnoreCase(e.getMessage())) {
-                System.out.println("客户端断开连接");
-                return;
-            }
+            MessageDigest md = MessageDigest.getInstance("md5");
+            return Base64.getEncoder().encodeToString(md.digest(data));
+        } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
         }
+        return null;
     }
 
     private boolean init() {
@@ -87,7 +64,21 @@ public final class User {
         return true;
     }
 
+    public void receive() {
+        try {
+            while (true) {
+                process(reader.readLine());
+            }
+        } catch (IOException e) {
+            onDisable();
+        }
+    }
+
     private void process(String data) {
+        if (data == null) {
+            onDisable();
+            return;
+        }
         System.out.println("接收到数据");
         JSONObject json = JSONObject.parseObject(data);
         switch (json.getIntValue("code")) {
@@ -105,24 +96,25 @@ public final class User {
     private int uploadPhotos(JSONObject json) {
         try {
             for (Object basePhoto : json.getJSONArray("photos")) {
+                System.out.println("收到来自用户" + socket.getInetAddress().getHostAddress() + "的一张图片");
                 byte[] data = Base64.getDecoder().decode((String) basePhoto);
-                File outFile = new File("./cache/" + json.getString("st") + "/" + getSha1(data) + ".jpeg");
-                System.out.println("已保存为" + outFile.getPath());
+                File outFile = new File("./cache/" + json.getString("st") + "/" + getMd5(data) + ".jpeg");
                 if (outFile.exists()) {
-                    return 2;  //文件已存在
+                    System.out.println("文件重复");
+                    continue;
                 } else {
                     outFile.createNewFile();
                 }
                 DataOutputStream dos = new DataOutputStream(new FileOutputStream(outFile));
                 dos.write(data);
                 dos.close();
-                System.out.println("收到来自用户" + socket.getInetAddress().getHostAddress() + "的一张图片");
-                return 0;  //上传成功
+                System.out.println("已保存为" + outFile.getPath());
             }
         } catch (Exception e) {
             e.printStackTrace();
+            return 3;  //服务端错误
         }
-        return 3;  //服务端错误
+        return 2;  //上传成功
     }
 
     private void downloadPhotos(JSONObject json) {
@@ -147,18 +139,39 @@ public final class User {
         JSONArray resultArray = new JSONArray();
         resultArray.addAll(notUpdated.get(st).subList(0, json.getIntValue("num")));
         notUpdated.get(st).removeAll(resultArray);
+        result.put("code", 4);
         result.put("data", resultArray);
         writer.println(JSONObject.toJSONString(result));
     }
 
-    public void onDisable() {
+    public synchronized void onDisable() {
+        if (socket.isClosed()) {
+            return;
+        }
+        System.out.println("断开于" + socket.getInetAddress() + "的连接");
+        Main.users.remove(this);
         try {
+            socket.shutdownInput();
+            socket.shutdownOutput();
             reader.close();
             writer.close();
             socket.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null) {
+            return false;
+        }
+        return socket.getInetAddress().getHostAddress().equals(o);
+    }
+
+    @Override
+    public int hashCode() {
+        return socket.getInetAddress().getHostAddress().hashCode();
     }
 }
 

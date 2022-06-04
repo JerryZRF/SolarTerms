@@ -1,4 +1,4 @@
-package cf.jerryzrf.solarterms.client;
+package cf.jerryzrf.solarterms.client.activities;
 
 import android.content.Intent;
 import android.content.res.AssetManager;
@@ -12,6 +12,9 @@ import android.widget.Toast;
 import android.widget.VideoView;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import cf.jerryzrf.solarterms.client.Json;
+import cf.jerryzrf.solarterms.client.R;
+import cf.jerryzrf.solarterms.client.Utils;
 import cn.hutool.core.date.ChineseDate;
 import cn.hutool.core.date.DateUtil;
 import org.json.JSONException;

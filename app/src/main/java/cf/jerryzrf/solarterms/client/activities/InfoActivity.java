@@ -1,4 +1,4 @@
-package cf.jerryzrf.solarterms.client;
+package cf.jerryzrf.solarterms.client.activities;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -10,6 +10,10 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
+import cf.jerryzrf.solarterms.client.Json;
+import cf.jerryzrf.solarterms.client.Net;
+import cf.jerryzrf.solarterms.client.R;
+import cf.jerryzrf.solarterms.client.Utils;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
@@ -21,7 +25,6 @@ import org.jetbrains.annotations.NotNull;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -39,6 +42,8 @@ public final class InfoActivity extends AppCompatActivity {
         getSupportActionBar().hide();
         setContentView(R.layout.activity_info);
         EasyPhotos.preLoad(this);
+        findViewById(R.id.addPhotos).setEnabled(false);
+        (new Thread(() -> Net.connect(this))).start();
         //上传照片
         findViewById(R.id.addPhotos).setVisibility(View.GONE);
         findViewById(R.id.addPhotos).setOnClickListener((View view) -> EasyPhotos.createAlbum(this, true, false, GlideEngine.getInstance())//参数说明：上下文，是否显示相机按钮，是否使用宽高数据（false时宽高数据为0，扫描速度更快），[配置Glide为图片加载引擎](https://github.com/HuanTanSheng/EasyPhotos/wiki/12-%E9%85%8D%E7%BD%AEImageEngine%EF%BC%8C%E6%94%AF%E6%8C%81%E6%89%80%E6%9C%89%E5%9B%BE%E7%89%87%E5%8A%A0%E8%BD%BD%E5%BA%93)
@@ -114,14 +119,6 @@ public final class InfoActivity extends AppCompatActivity {
                         display(2);
                         break;
                     case R.id.item_photos:
-                        (new Thread(() -> {
-                            try {
-                                Net.connect(this);
-                            } catch (IOException e) {
-                                Net.error(this, "未知错误");
-                                e.printStackTrace();
-                            }
-                        })).start();
                         display(3);
                     default:
                 }
@@ -165,6 +162,12 @@ public final class InfoActivity extends AppCompatActivity {
         } catch (JSONException e) {
             e.printStackTrace();
         }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        Net.onDisable();
     }
 
     /**
@@ -251,7 +254,5 @@ public final class InfoActivity extends AppCompatActivity {
         public Bitmap getCacheBitmap(@NotNull Context context, @NotNull Uri uri, int width, int height) throws Exception {
             return Glide.with(context).asBitmap().load(uri).submit(width, height).get();
         }
-
-
     }
 }

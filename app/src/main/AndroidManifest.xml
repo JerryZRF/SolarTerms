@@ -11,17 +11,17 @@
             android:supportsRtl="true"
             android:theme="@style/Theme.SolarTerms">
         <activity
-                android:name=".SettingsActivity"
+                android:name=".activities.SettingsActivity"
                 android:exported="true"
                 android:label="@string/title_activity_settings"/>
         <activity
-                android:name=".InfoActivity"
+                android:name=".activities.InfoActivity"
                 android:exported="true"/>
         <activity
-                android:name=".AboutActivity"
+                android:name=".activities.AboutActivity"
                 android:exported="true"/>
         <activity
-                android:name=".MainActivity"
+                android:name=".activities.MainActivity"
                 android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>

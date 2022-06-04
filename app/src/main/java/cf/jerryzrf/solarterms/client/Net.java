@@ -1,5 +1,6 @@
 package cf.jerryzrf.solarterms.client;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -21,29 +22,73 @@ import java.util.List;
  */
 public class Net {
     public static final String SERVER_ADDRESS = "fd00:6868:6868::11b";
-
     static Socket socket;
     static BufferedReader reader;
     static PrintWriter writer;
+    @SuppressLint("StaticFieldLeak")
+    static Activity activity;
 
-    public static void connect(Activity activity) throws IOException {
-        socket = new Socket(SERVER_ADDRESS, 20220);
-        reader = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
-        writer = new PrintWriter(new OutputStreamWriter(socket.getOutputStream(), StandardCharsets.UTF_8), true);
+    public static void connect(Activity a) {
+        activity = a;
         try {
-            JSONObject result = new JSONObject(reader.readLine());
-            if (result.getInt("code") == 1) {
-                error(activity, "你已被该服务器禁封");
+            socket = new Socket(SERVER_ADDRESS, 20220);
+            reader = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
+            writer = new PrintWriter(new OutputStreamWriter(socket.getOutputStream(), StandardCharsets.UTF_8), true);
+        } catch (Exception e) {
+            e.printStackTrace();
+            dialog(activity, "无法连接到服务器", e.getMessage());
+        }
+        (new Thread(Net::receive)).start();
+        activity.findViewById(R.id.addPhotos).setEnabled(true);
+    }
+
+    private static void receive() {
+        try {
+            while (true) {
+                process(reader.readLine());
+            }
+        } catch (Exception e) {
+            dialog(activity, "无法连接到服务器", "与服务器断开连接");
+            activity.findViewById(R.id.addPhotos).setEnabled(false);
+            onDisable();
+        }
+    }
+
+    private static void process(String data) {
+        try {
+            JSONObject json = new JSONObject(data);
+            switch (json.getInt("code")) {
+                case 0: {
+                    dialog(activity, "已连接到服务器", "连接成功");
+                    break;
+                }
+                case 1: {
+                    dialog(activity, "无法连接到服务器", "你已被该服务器禁封");
+                    activity.findViewById(R.id.addPhotos).setEnabled(true);
+                    break;
+                }
+                case 2: {
+                    dialog(activity, "上传成功", "待审核通过，您的图片将会被展示于此~");
+                    break;
+                }
+                case 3: {
+                    dialog(activity, "上传失败", "服务器错误");
+                    break;
+                }
+                case 4: {
+                    break;
+                }
+                default:
             }
         } catch (JSONException e) {
             e.printStackTrace();
         }
     }
 
-    public static void error(Activity activity, String message) {
+    public static void dialog(Activity activity, String title, String message) {
         activity.runOnUiThread(() -> {
             AlertDialog errorDialog = new AlertDialog.Builder(activity)
-                    .setTitle("连接服务器失败")
+                    .setTitle(title)
                     .setMessage(message)
                     .setIcon(R.mipmap.ic_launcher)
                     .create();
@@ -58,7 +103,6 @@ public class Net {
             try {
                 Bitmap bitmap = BitmapFactory.decodeStream(context.getContentResolver().openInputStream(u));
                 byte[] photoBytes = compressImage(bitmap);
-                System.out.println("data:" + Base64.getEncoder().encodeToString(photoBytes));
                 array.put(Base64.getEncoder().encodeToString(photoBytes));
             } catch (Exception e) {
                 e.printStackTrace();
@@ -68,23 +112,34 @@ public class Net {
             json.put("code", "0");
             json.put("photos", array);
             json.put("st", st);
-        } catch (JSONException e) {
+            writer.println(json);
+        } catch (Exception e) {
             e.printStackTrace();
+            dialog(activity, "上传失败", e.getMessage());
         }
-        writer.println(json);
-        System.out.println("发送成功");
     }
 
     private static byte[] compressImage(Bitmap image) {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        image.compress(Bitmap.CompressFormat.JPEG, 100, baos);//这里压缩options%，把压缩后的数据存放到baos中
+        image.compress(Bitmap.CompressFormat.JPEG, 100, baos);
         int options = 90;
-        while (baos.toByteArray().length / 1024 > 100 && options >= 10) {  //循环判断如果压缩后图片是否大于100Kb,大于继续压缩
+        //<=100KB
+        while (baos.toByteArray().length / 1024 > 100 && options >= 10) {
             baos.reset();
-            // 第一个参数 ：图片格式 ，第二个参数： 图片质量，100为最高，0为最差  ，第三个参数：保存压缩后的数据的流
-            image.compress(Bitmap.CompressFormat.JPEG, options, baos);//这里压缩options%，把压缩后的数据存放到baos中
-            options -= 10;//每次都减少10
+            image.compress(Bitmap.CompressFormat.JPEG, options, baos);
+            options -= 10;
         }
         return baos.toByteArray();
+    }
+
+    public static void onDisable() {
+        activity = null;
+        try {
+            socket.shutdownInput();
+            socket.shutdownOutput();
+            socket.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }

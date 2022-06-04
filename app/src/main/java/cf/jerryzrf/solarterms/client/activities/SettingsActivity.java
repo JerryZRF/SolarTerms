@@ -1,7 +1,9 @@
-package cf.jerryzrf.solarterms.client;
+package cf.jerryzrf.solarterms.client.activities;
 
 import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
+import cf.jerryzrf.solarterms.client.R;
+import cf.jerryzrf.solarterms.client.SettingFragment;
 
 /**
  * @author JerryZRF
